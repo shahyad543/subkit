@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://subkit.tools/sitemap.xml
