@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SRT Cleaner — Remove Duplicates, Brackets &amp; Empty Cues Online Free | SubKit</title>
+<meta name="description" content="Clean any SRT or VTT subtitle file online for free: remove duplicate cues, empty blocks, hearing-impaired brackets, ♪ notes and punctuation mess. 100% in your browser — no upload.">
+<meta name="keywords" content="srt cleaner, clean subtitles online, remove duplicate subtitles, subtitle cleanup">
+<link rel="canonical" href="https://subkit.tools/srt-cleaner.html">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="index.html"><span class="brand-mark">◢</span> SubKit</a>
+    <nav class="nav">
+      <a href="srt-cleaner.html" class="active">SRT Cleaner</a>
+      <a href="subtitle-shifter.html">Subtitle Shifter</a>
+      <a href="srt-converter.html">Converter</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap tool-page">
+  <h1>SRT Cleaner</h1>
+  <p class="page-sub">Paste your subtitle file or drop it below, pick what to remove, and get a clean file back. Your text never leaves this browser tab.</p>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Input</h2>
+      <label class="file-btn">Open file<input type="file" id="file-in" accept=".srt,.vtt,.ass,.ssa,.txt" hidden></label>
+    </div>
+    <textarea id="input" class="io" spellcheck="false" placeholder="1&#10;00:00:01,000 --> 00:00:03,500&#10;Hello and welcome to the video..."></textarea>
+    <div class="options">
+      <label><input type="checkbox" id="opt-dup" checked> Remove duplicate consecutive cues</label>
+      <label><input type="checkbox" id="opt-empty" checked> Remove empty / whitespace-only cues</label>
+      <label><input type="checkbox" id="opt-hi" checked> Remove hearing-impaired tags [ ] and ( )</label>
+      <label><input type="checkbox" id="opt-notes" checked> Remove ♪ music notes</label>
+      <label><input type="checkbox" id="opt-punct"> Tidy punctuation (collapse repeats, fix spacing)</label>
+      <label><input type="checkbox" id="opt-dots"> Strip trailing "..." from lines</label>
+    </div>
+    <div class="actions">
+      <button id="run" class="btn btn-primary">Clean Subtitles</button>
+      <button id="load-sample" class="btn">Load Sample</button>
+      <span id="status" class="status"></span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Output</h2>
+      <div>
+        <button id="copy" class="btn">Copy</button>
+        <button id="download" class="btn btn-primary">Download .srt</button>
+      </div>
+    </div>
+    <textarea id="output" class="io" spellcheck="false" placeholder="The cleaned subtitle file will appear here."></textarea>
+  </section>
+
+  <section class="seo-text">
+    <h2>What does the SRT cleaner remove?</h2>
+    <p>Automatic transcription tools and fan subtitles often arrive full of noise: the same line
+    repeated twice in a row because two engines overlapped, empty cues with timestamps but no text,
+    <code>[door slams]</code> and <code>(phone ringing)</code> hearing-impaired tags, ♪ markers around
+    songs, and punctuation like <code>Really?!!</code> or trailing <code>...</code> on every line.
+    Each checkbox above targets one of these problems, so you can see exactly what changes and keep
+    anything you actually want — the hearing-impaired tags are off-limits to nobody, but comedy and
+    accessibility releases often keep them.</p>
+    <h2>Will it renumber the cues?</h2>
+    <p>Yes. After cleaning, cues are renumbered 1, 2, 3… with no gaps, which is what YouTube and
+    most editors expect. Timing is never modified — if you also need to resync, use the
+    <a href="subtitle-shifter.html">Subtitle Shifter</a> afterwards.</p>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <span>© 2026 SubKit — free subtitle tools that respect your privacy</span>
+    <span class="footer-links"><a href="index.html">Home</a> · <a href="subtitle-shifter.html">Shifter</a> · <a href="srt-converter.html">Converter</a></span>
+  </div>
+</footer>
+<script src="script.js"></script>
+<script>
+document.getElementById('load-sample').addEventListener('click', () => {
+  document.getElementById('input').value = SAMPLE;
+});
+document.getElementById('run').addEventListener('click', () => {
+  const src = document.getElementById('input').value;
+  if (!src.trim()) { setStatus('Paste a subtitle file first.', true); return; }
+  const opts = {
+    dup: document.getElementById('opt-dup').checked,
+    empty: document.getElementById('opt-empty').checked,
+    hi: document.getElementById('opt-hi').checked,
+    notes: document.getElementById('opt-notes').checked,
+    punct: document.getElementById('opt-punct').checked,
+    dots: document.getElementById('opt-dots').checked,
+  };
+  try {
+    const cues = parseSubtitles(src);
+    if (!cues.length) throw new Error('No subtitle cues were found in this file.');
+    const before = cues.length;
+    const cleaned = cleanCues(cues, opts);
+    document.getElementById('output').value = toSRT(cleaned);
+    setStatus(`${before} → ${cleaned.length} cues (${before - cleaned.length} removed).`);
+  } catch (e) { setStatus(e.message, true); }
+});
+document.getElementById('download').addEventListener('click', () => downloadText('cleaned.srt', document.getElementById('output').value));
+document.getElementById('copy').addEventListener('click', () => copyOutput('output'));
+setupFileDrop('file-in', 'input');
+</script>
+</body>
+</html>

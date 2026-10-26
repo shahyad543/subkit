@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subtitle Shifter — Sync SRT &amp; VTT Timing Online Free | SubKit</title>
+<meta name="description" content="Subtitles out of sync? Shift all subtitle timings forward or backward by seconds — supports SRT, VTT and ASS. Free online subtitle resync, 100% in your browser, no upload.">
+<meta name="keywords" content="subtitle shifter, resync subtitles, shift srt timing, subtitle delay fix, sync subtitles online">
+<link rel="canonical" href="https://subkit.tools/subtitle-shifter.html">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="index.html"><span class="brand-mark">◢</span> SubKit</a>
+    <nav class="nav">
+      <a href="srt-cleaner.html">SRT Cleaner</a>
+      <a href="subtitle-shifter.html" class="active">Subtitle Shifter</a>
+      <a href="srt-converter.html">Converter</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap tool-page">
+  <h1>Subtitle Shifter</h1>
+  <p class="page-sub">Subtitles showing too early or too late? Enter an offset in seconds — positive moves subtitles later, negative moves them earlier — and every cue is resynced instantly.</p>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Input</h2>
+      <label class="file-btn">Open file<input type="file" id="file-in" accept=".srt,.vtt,.ass,.ssa,.txt" hidden></label>
+    </div>
+    <textarea id="input" class="io" spellcheck="false" placeholder="1&#10;00:00:01,000 --> 00:00:03,500&#10;Hello and welcome to the video..."></textarea>
+    <div class="options shift-row">
+      <label class="shift-label">Offset (seconds):
+        <input type="number" id="offset" step="0.001" value="2" class="shift-input">
+      </label>
+      <span class="hint">Positive = subtitles appear later · Negative = subtitles appear earlier</span>
+    </div>
+    <div class="actions">
+      <button id="run" class="btn btn-primary">Shift Timings</button>
+      <button id="preview" class="btn">Preview First Cue</button>
+      <span id="status" class="status"></span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Output</h2>
+      <div>
+        <button id="copy" class="btn">Copy</button>
+        <button id="download-srt" class="btn btn-primary">Download .srt</button>
+        <button id="download-vtt" class="btn">Download .vtt</button>
+      </div>
+    </div>
+    <textarea id="output" class="io" spellcheck="false" placeholder="The shifted subtitle file will appear here."></textarea>
+  </section>
+
+  <section class="seo-text">
+    <h2>How do I know which offset to use?</h2>
+    <p>Play the video and note how far off the first line is. If a line that should appear at
+    0:10 shows up at 0:13, your subtitles are <strong>3 seconds early</strong> — enter
+    <code>+3</code> to push everything later. If they show up at 0:07, enter <code>-3</code>.
+    The offset applies to every cue equally, so one measurement fixes the whole file.</p>
+    <h2>Does shifting work on VTT and ASS files too?</h2>
+    <p>Yes — the shifter auto-detects SRT, WebVTT and ASS input and re-exports as SRT or VTT.
+    All timings are shifted, including the end timestamps, so gaps between cues are preserved exactly.</p>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <span>© 2026 SubKit — free subtitle tools that respect your privacy</span>
+    <span class="footer-links"><a href="index.html">Home</a> · <a href="srt-cleaner.html">Cleaner</a> · <a href="srt-converter.html">Converter</a></span>
+  </div>
+</footer>
+<script src="script.js"></script>
+<script>
+document.getElementById('run').addEventListener('click', () => {
+  const src = document.getElementById('input').value;
+  if (!src.trim()) { setStatus('Paste a subtitle file first.', true); return; }
+  const offset = parseFloat(document.getElementById('offset').value);
+  if (!isFinite(offset) || offset === 0) { setStatus('Enter a non-zero offset in seconds.', true); return; }
+  try {
+    const cues = parseSubtitles(src);
+    if (!cues.length) throw new Error('No subtitle cues were found in this file.');
+    const shifted = cues.map(c => ({
+      start: Math.max(0, Math.round(c.start + offset * 1000)),
+      end: Math.max(1, Math.round(c.end + offset * 1000)),
+      text: c.text,
+    }));
+    document.getElementById('output').value = toSRT(shifted);
+    setStatus(`${cues.length} cues shifted by ${offset > 0 ? '+' : ''}${offset}s.`);
+  } catch (e) { setStatus(e.message, true); }
+});
+document.getElementById('preview').addEventListener('click', () => {
+  const src = document.getElementById('input').value;
+  if (!src.trim()) { setStatus('Paste a subtitle file first.', true); return; }
+  const offset = parseFloat(document.getElementById('offset').value) || 0;
+  const cues = parseSubtitles(src);
+  if (!cues.length) { setStatus('No cues found.', true); return; }
+  const c = cues[0];
+  setStatus(`First cue: ${fmtClock(c.start)} → ${fmtClock(Math.max(0, c.start + offset * 1000))} "${c.text.split('\n')[0].slice(0, 40)}"`);
+});
+document.getElementById('download-srt').addEventListener('click', () => downloadText('shifted.srt', document.getElementById('output').value));
+document.getElementById('download-vtt').addEventListener('click', () => {
+  const cues = parseSubtitles(document.getElementById('output').value || document.getElementById('input').value);
+  downloadText('shifted.vtt', toVTT(cues));
+});
+document.getElementById('copy').addEventListener('click', () => copyOutput('output'));
+setupFileDrop('file-in', 'input');
+</script>
+</body>
+</html>

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SRT to VTT &amp; ASS Converter — Free Online Subtitle Converter | SubKit</title>
+<meta name="description" content="Convert subtitles between SRT, WebVTT (VTT) and ASS formats online for free. Auto-detects the input format, runs entirely in your browser — no upload, no signup.">
+<meta name="keywords" content="srt to vtt, srt to ass, vtt to srt, ass to srt, subtitle converter online, free subtitle converter">
+<link rel="canonical" href="https://subkit.tools/srt-converter.html">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="index.html"><span class="brand-mark">◢</span> SubKit</a>
+    <nav class="nav">
+      <a href="srt-cleaner.html">SRT Cleaner</a>
+      <a href="subtitle-shifter.html">Subtitle Shifter</a>
+      <a href="srt-converter.html" class="active">Converter</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap tool-page">
+  <h1>Subtitle Converter — SRT, VTT, ASS</h1>
+  <p class="page-sub">Drop any SRT, WebVTT or ASS file below. The input format is detected automatically — pick the output format and download. Everything happens inside your browser.</p>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Input <span id="detect" class="tag"></span></h2>
+      <label class="file-btn">Open file<input type="file" id="file-in" accept=".srt,.vtt,.ass,.ssa,.txt" hidden></label>
+    </div>
+    <textarea id="input" class="io" spellcheck="false" placeholder="1&#10;00:00:01,000 --> 00:00:03,500&#10;Hello and welcome to the video..."></textarea>
+    <div class="options convert-row">
+      <label class="shift-label">Output format:
+        <select id="format" class="shift-input select">
+          <option value="srt">SRT (.srt)</option>
+          <option value="vtt">WebVTT (.vtt)</option>
+          <option value="ass">ASS (.ass)</option>
+        </select>
+      </label>
+    </div>
+    <div class="actions">
+      <button id="run" class="btn btn-primary">Convert</button>
+      <span id="status" class="status"></span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Output</h2>
+      <div>
+        <button id="copy" class="btn">Copy</button>
+        <button id="download" class="btn btn-primary">Download</button>
+      </div>
+    </div>
+    <textarea id="output" class="io" spellcheck="false" placeholder="The converted subtitle file will appear here."></textarea>
+  </section>
+
+  <section class="seo-text">
+    <h2>Which subtitle format should I convert to?</h2>
+    <p><strong>SRT → VTT:</strong> you are embedding subtitles in a website or HTML5 player — the
+    <code>&lt;track&gt;</code> element only accepts WebVTT. The conversion is lossless: only the
+    header line and the comma-to-dot timestamp change are added.</p>
+    <p><strong>SRT/VTT → ASS:</strong> you want styling — fonts, colors, outline and exact on-screen
+    positioning that VLC and MPV honor. Converting to ASS gives every cue the same default style,
+    which you can then tweak in a text editor or Aegisub.</p>
+    <p><strong>ASS/VTT → SRT:</strong> you are uploading to YouTube or handing the file to a video
+    editor. Be aware this direction is lossy: ASS override tags, positioning and styling are stripped,
+    leaving only text and timing.</p>
+    <h2>Is any file uploaded to a server?</h2>
+    <p>No. SubKit's converter is a few hundred lines of JavaScript that run in your browser tab.
+    Your subtitles are never transmitted, stored or logged — it works offline too, once the page has loaded.</p>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <span>© 2026 SubKit — free subtitle tools that respect your privacy</span>
+    <span class="footer-links"><a href="index.html">Home</a> · <a href="srt-cleaner.html">Cleaner</a> · <a href="subtitle-shifter.html">Shifter</a></span>
+  </div>
+</footer>
+<script src="script.js"></script>
+<script>
+const input = document.getElementById('input');
+function detectNow() {
+  const kind = detectFormat(input.value);
+  const el = document.getElementById('detect');
+  el.textContent = kind ? kind.toUpperCase() + ' detected' : '';
+  el.classList.toggle('on', !!kind);
+}
+input.addEventListener('input', detectNow);
+document.getElementById('run').addEventListener('click', () => {
+  if (!input.value.trim()) { setStatus('Paste a subtitle file first.', true); return; }
+  const fmt = document.getElementById('format').value;
+  try {
+    const cues = parseSubtitles(input.value);
+    if (!cues.length) throw new Error('No subtitle cues were found in this file.');
+    const out = fmt === 'srt' ? toSRT(cues) : fmt === 'vtt' ? toVTT(cues) : toASS(cues);
+    document.getElementById('output').value = out;
+    setStatus(`Converted ${cues.length} cues to ${fmt.toUpperCase()}.`);
+  } catch (e) { setStatus(e.message, true); }
+});
+document.getElementById('download').addEventListener('click', () => {
+  const fmt = document.getElementById('format').value;
+  const names = { srt: 'subtitles.srt', vtt: 'subtitles.vtt', ass: 'subtitles.ass' };
+  downloadText(names[fmt], document.getElementById('output').value);
+});
+document.getElementById('copy').addEventListener('click', () => copyOutput('output'));
+setupFileDrop('file-in', 'input', detectNow);
+</script>
+</body>
+</html>
