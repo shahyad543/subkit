@@ -24,33 +24,81 @@ Today we'll talk about subtitles.
 00:00:11,500 --> 00:00:14,000
 Really?!!   Let's get started...`;
 
+/* ---------- low-level: encoding detection ---------- */
+
+function decodeBytes(bytes) {
+  // BOM detection first.
+  if (bytes.length >= 2 && bytes[0] === 0xFF && bytes[1] === 0xFE)
+    return new TextDecoder('utf-16le').decode(bytes.slice(2));
+  if (bytes.length >= 2 && bytes[0] === 0xFE && bytes[1] === 0xFF)
+    return new TextDecoder('utf-16be').decode(bytes.slice(2));
+  if (bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF)
+    return new TextDecoder('utf-8').decode(bytes.slice(3));
+  // UTF-16 without BOM: many zero bytes interleaved with ASCII text.
+  const n = Math.min(bytes.length, 400);
+  let nulls = 0;
+  for (let i = 0; i < n; i++) if (bytes[i] === 0) nulls++;
+  if (n > 0 && nulls > n / 4)
+    return new TextDecoder('utf-16le').decode(bytes);
+  return new TextDecoder('utf-8').decode(bytes);
+}
+
 /* ---------- parsing ---------- */
+
+const TIME_TOKEN_SRC = '(?:\\d{1,2}:)?\\d{1,2}:\\d{2}(?:[,.]\\d{1,3})?';
+const TIME_LINE_RE = new RegExp('^\\s*(' + TIME_TOKEN_SRC + ')\\s*-->\\s*(' + TIME_TOKEN_SRC + ')');
 
 function detectFormat(text) {
   const t = text.trim();
   if (/^WEBVTT/i.test(t)) return 'vtt';
   if (/^\s*\[Script Info\]/im.test(t) || /^\s*Dialogue:/im.test(t)) return 'ass';
+  if (/\{\d+\}\{\d+\}/.test(t)) return 'sub';
   if (/\d{1,2}:\d{2}:\d{2}[,.]\d{1,3}\s*-->\s*\d{1,2}:\d{2}:\d{2}[,.]\d{1,3}/.test(t)) return 'srt';
   return null;
 }
 
 function parseTimeToken(token) {
-  // Accepts h:mm:ss,mmm | h:mm:ss.mmm | mm:ss.mmm
-  const m = token.trim().match(/^(?:(\d+):)?(\d{1,2}):(\d{2})[,.](\d{1,3})$/);
+  // Accepts h:mm:ss,mmm | h:mm:ss.mmm | mm:ss,mmm | mm:ss.mmm | mm:ss (no ms)
+  const m = token.trim().match(/^(?:(\d+):)?(\d{1,2}):(\d{2})(?:[,.](\d{1,3}))?$/);
   if (!m) return NaN;
   const h = parseInt(m[1] || '0', 10);
   const min = parseInt(m[2], 10);
   const sec = parseInt(m[3], 10);
-  const ms = parseInt(m[4].padEnd(3, '0'), 10);
+  const ms = m[4] ? parseInt(m[4].padEnd(3, '0'), 10) : 0;
   return ((h * 60 + min) * 60 + sec) * 1000 + ms;
 }
 
+function diagnose(text) {
+  const t = text.slice(0, 8000);
+  const hasArrow = /-->/.test(t);
+  const hasTime = /\d{1,2}:\d{2}[:.]\d{2}/.test(t);
+  if (hasArrow && hasTime)
+    return 'Timestamp lines were found but could not be parsed. The file may be corrupted or use an unusual time format — open it in Notepad and check the lines around the timestamps.';
+  if (hasTime && !hasArrow)
+    return 'Timestamps were found but no "-->" separator between start and end times. A valid cue looks like:\n\n00:00:01,000 --> 00:00:03,000\nYour text here';
+  return 'No subtitle cues were found. This file does not look like SRT, WebVTT, ASS or MicroDVD — it may be plain text without timestamps, or a subtitle format SubKit does not support yet.';
+}
+
 function parseSubtitles(text) {
-  const kind = detectFormat(text);
-  if (kind === 'ass') return parseASS(text);
-  if (kind === 'vtt') return parseVTT(text);
-  if (kind === 'srt') return parseSRT(text);
-  return parseSRT(text); // last-ditch: SRT-style cue scan
+  const t = text.replace(/^\uFEFF/, '');
+  const kind = detectFormat(t);
+  let cues = [];
+  if (kind === 'ass') {
+    cues = parseASS(t);
+  } else if (kind === 'vtt') {
+    cues = parseVTT(t);
+    if (!cues.length) cues = linearScan(t);
+  } else if (kind === 'srt') {
+    cues = parseSRT(t);
+    if (!cues.length) cues = linearScan(t);
+  } else if (kind === 'sub') {
+    cues = parseMicroDVD(t);
+  } else {
+    cues = parseMicroDVD(t);
+    if (!cues.length) cues = linearScan(t);
+    if (!cues.length) throw new Error(diagnose(t));
+  }
+  return cues;
 }
 
 function parseSRT(text) {
@@ -71,11 +119,50 @@ function parseSRT(text) {
   return cues;
 }
 
+// Last-resort scan: walk line by line, collect text after each timestamp line.
+// Catches files without blank lines between cues or missing index numbers.
+function linearScan(text) {
+  const cues = [];
+  const lines = text.replace(/\r\n?/g, '\n').split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(TIME_LINE_RE);
+    if (!m) continue;
+    const start = parseTimeToken(m[1]);
+    const end = parseTimeToken(m[2]);
+    if (isNaN(start) || isNaN(end)) continue;
+    const body = [];
+    for (let j = i + 1; j < lines.length; j++) {
+      const l = lines[j];
+      if (TIME_LINE_RE.test(l) || l.trim() === '') break;
+      body.push(l);
+    }
+    cues.push({ start, end, text: body.join('\n').trim() });
+  }
+  return cues;
+}
+
 function parseVTT(text) {
   // VTT is SRT-shaped without index lines and with a WEBVTT header.
   const cleaned = text.replace(/^WEBVTT[^\n]*\n?/i, '')
                       .replace(/^NOTE\n(?:[^\n]*\n)*\n?/gmi, '');
   return parseSRT(cleaned);
+}
+
+function parseMicroDVD(text) {
+  const cues = [];
+  const FPS = 25; // MicroDVD stores frame numbers; 25 is the common default.
+  for (const line of text.replace(/\r\n?/g, '\n').split('\n')) {
+    const m = line.match(/^\s*\{(\d+)\}\{(\d+)\}(.*)$/);
+    if (!m) continue;
+    const body = m[3].replace(/\{[^}]*\}/g, '').replace(/\|/g, '\n').trim();
+    if (!body) continue;
+    cues.push({
+      start: Math.round(parseInt(m[1], 10) * 1000 / FPS),
+      end: Math.round(parseInt(m[2], 10) * 1000 / FPS),
+      text: body,
+    });
+  }
+  return cues;
 }
 
 function parseASS(text) {
@@ -175,13 +262,13 @@ function cleanCues(cues, opts) {
   for (const c of out) {
     let lines = c.text.split('\n').map(l => l.trim()).filter(l => l !== '');
     if (opts.hi) lines = lines.map(l => l.replace(/[\[\(][^\]\)]*[\]\)]/g, '').trim()).filter(l => l);
-    if (opts.notes) lines = lines.map(l => l.replace(/[♪♫♪]+/g, '').replace(/[♪♫]/g, '').trim()).filter(l => l);
+    if (opts.notes) lines = lines.map(l => l.replace(/[♪♫]+/g, '').trim()).filter(l => l);
     if (opts.dots) lines = lines.map(l => l.replace(/\.{2,}\s*$/, '').trim());
     if (opts.punct) {
       lines = lines.map(l => l
-        .replace(/([!?.,])\1{1,}/g, '$1')          // ?!! -> ?!
-        .replace(/\s+([,.!?;:])/g, '$1')            // "word ," -> "word,"
-        .replace(/([,.!?;:])(?=[A-Za-z])/g, '$1 ')  // "word.Next" -> "word. Next"
+        .replace(/([!?.,])\1{1,}/g, '$1')           // ?!! -> ?!
+        .replace(/\s+([,.!?;:])/g, '$1')             // "word ," -> "word,"
+        .replace(/([,.!?;:])(?=[A-Za-z])/g, '$1 ')   // "word.Next" -> "word. Next"
         .replace(/ {2,}/g, ' ')
         .trim());
     }
@@ -234,26 +321,49 @@ function downloadText(filename, content) {
 }
 
 function copyOutput(id) {
-  const text = document.getElementById(id).value;
-  if (!text.trim()) { setStatus('Nothing to copy yet.', true); return; }
-  navigator.clipboard.writeText(text)
-    .then(() => setStatus('Copied to clipboard.'))
-    .catch(() => setStatus('Copy failed — select the text manually.', true));
+  const el = document.getElementById(id);
+  if (!el || !el.value.trim()) { setStatus('Nothing to copy yet.', true); return; }
+  const done = () => setStatus('Copied to clipboard.');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(el.value).then(done).catch(() => {
+      el.select(); document.execCommand('copy'); done();
+    });
+  } else {
+    el.select(); document.execCommand('copy'); done();
+  }
 }
 
-function setupFileDrop(inputId, textareaId, after) {
-  const input = document.getElementById(inputId);
+function fmtClock(ms) {
+  ms = Math.max(0, Math.round(ms));
+  const h = Math.floor(ms / 3600000), m = Math.floor(ms / 60000) % 60, s = Math.floor(ms / 1000) % 60;
+  return (h ? h + ':' : '') + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+}
+
+function setupFileDrop(fileInputId, textareaId, after) {
+  const fileInput = document.getElementById(fileInputId);
   const area = document.getElementById(textareaId);
-  if (!input || !area) return;
-  input.addEventListener('change', () => {
-    const file = input.files[0];
-    if (!file) return;
+  if (!fileInput || !area) return;
+  const load = file => {
     const reader = new FileReader();
     reader.onload = () => {
-      area.value = reader.result;
-      if (after) after();
-      setStatus(`Loaded ${file.name} (${(file.size / 1024).toFixed(1)} KB).`);
+      try {
+        area.value = decodeBytes(new Uint8Array(reader.result));
+        setStatus(`Loaded "${file.name}".`);
+        if (after) after();
+      } catch (e) {
+        setStatus(`Could not read "${file.name}".`, true);
+      }
     };
-    reader.readAsText(file, 'utf-8');
+    reader.onerror = () => setStatus(`Could not read "${file.name}".`, true);
+    reader.readAsArrayBuffer(file);
+  };
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) load(fileInput.files[0]);
+  });
+  area.addEventListener('dragover', e => e.preventDefault());
+  area.addEventListener('drop', e => {
+    e.preventDefault();
+    const f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) load(f);
   });
 }
