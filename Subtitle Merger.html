@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subtitle Merger &amp; Splitter — Combine or Divide SRT Files Online Free | SubKit</title>
+<meta name="description" content="Merge multiple SRT, VTT or ASS subtitle files into one, or split a long subtitle file into equal parts — online, free, 100% in your browser. No upload, no signup.">
+<meta name="keywords" content="subtitle merger, merge srt files, split subtitle, combine subtitles online, srt splitter">
+<meta name="google-site-verification" content="0rfrfs-A91zfNkmEx3N2jSta2bQBfZ6MLLuwik" />
+<link rel="canonical" href="https://subkit.online/subtitle-merger.html">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="index.html"><span class="brand-mark">◢</span> SubKit</a>
+    <nav class="nav">
+      <a href="srt-cleaner.html">SRT Cleaner</a>
+      <a href="subtitle-shifter.html">Shifter</a>
+      <a href="srt-converter.html">Converter</a>
+      <a href="subtitle-merger.html" class="active">Merger &amp; Splitter</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap tool-page">
+  <h1>Subtitle Merger &amp; Splitter</h1>
+  <p class="page-sub">Load several subtitle files to combine them into one, or load a single long file and cut it into equal parts. Every calculation happens in this browser tab.</p>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Input <span id="file-count" class="tag"></span></h2>
+      <div>
+        <label class="file-btn">Open files<input type="file" id="file-in" accept=".srt,.vtt,.ass,.ssa,.txt" multiple hidden></label>
+        <button id="clear-files" class="btn" style="display:none">Clear files</button>
+      </div>
+    </div>
+    <textarea id="input" class="io" spellcheck="false" placeholder="Paste a subtitle file here, or use Open files to load one or more files at once."></textarea>
+    <div class="options">
+      <h3 style="margin:.2rem 0 .4rem;font-size:.95rem;color:var(--text-dim)">Mode: Merge</h3>
+      <label><input type="radio" name="mode" value="sequence" checked> Sequential — each file starts after the previous one ends</label>
+      <label class="shift-row" style="margin-left:1.4rem">
+        <span class="shift-label">Gap between files (seconds):
+          <input type="number" id="gap" step="0.1" value="0" class="shift-input" style="width:80px">
+        </span>
+      </label>
+      <label><input type="radio" name="mode" value="overlay"> Overlay — keep original timings (for parallel tracks / translations)</label>
+      <h3 style="margin:.8rem 0 .4rem;font-size:.95rem;color:var(--text-dim)">Mode: Split</h3>
+      <label><input type="radio" name="mode" value="split"> Split into parts of
+        <input type="number" id="part-size" step="1" min="2" value="500" class="shift-input" style="width:70px"> cues each
+      </label>
+    </div>
+    <div class="actions">
+      <button id="run" class="btn btn-primary">Run</button>
+      <button id="load-sample" class="btn">Load Sample</button>
+      <span id="status" class="status"></span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Output <span id="part-tag" class="tag" style="display:none"></span></h2>
+      <div>
+        <select id="part-select" class="shift-input select" style="display:none"></select>
+        <button id="copy" class="btn">Copy</button>
+        <button id="download" class="btn btn-primary">Download .srt</button>
+      </div>
+    </div>
+    <textarea id="output" class="io" spellcheck="false" placeholder="The merged or split subtitle file will appear here."></textarea>
+  </section>
+
+  <section class="seo-text">
+    <h2>When do you need to merge subtitle files?</h2>
+    <p>The classic case is a two-part episode: you have <code>part1.srt</code> and <code>part2.srt</code> but
+    a single continuous video. Sequential merge shifts every cue of the second file so it starts right
+    after the last cue of the first file, with an optional gap you set in seconds. Choose overlay instead
+    when you want two subtitle tracks with their original timings combined into one file — for example
+    a translation written on top of original timing, or captions from two different sources.</p>
+    <h2>Why split a subtitle file?</h2>
+    <p>Long files are awkward to translate or proofread in one sitting, and some editors choke on
+    subtitle files with tens of thousands of cues. Splitting into equal parts gives you manageable
+    chunks with correct numbering in each file — pick any part from the dropdown and download it
+    separately. If you later shift the timing of a part to match its video segment, the
+    <a href="subtitle-shifter.html">Subtitle Shifter</a> does that in one step.</p>
+    <h2>Which formats are supported?</h2>
+    <p>SRT, WebVTT (VTT), ASS and MicroDVD inputs are auto-detected for every loaded file, and the
+    result is exported as a clean, renumbered SRT file that YouTube, VLC and every video editor accepts.
+    Like all SubKit tools, nothing is uploaded: your files are read locally by JavaScript in this tab
+    and never leave your computer.</p>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <span>© 2026 SubKit — free subtitle tools that respect your privacy</span>
+    <span class="footer-links"><a href="index.html">Home</a> · <a href="srt-cleaner.html">Cleaner</a> · <a href="srt-converter.html">Converter</a> · <a href="subtitle-shifter.html">Shifter</a></span>
+  </div>
+</footer>
+<script src="script.js"></script>
+<script>
+const input = document.getElementById('input');
+const fileInput = document.getElementById('file-in');
+const fileCount = document.getElementById('file-count');
+const clearBtn = document.getElementById('clear-files');
+const partSelect = document.getElementById('part-select');
+const partTag = document.getElementById('part-tag');
+let loadedFiles = [];   // { name, text }
+let parts = [];         // for split mode: array of cue arrays
+
+function refreshFileUI() {
+  fileCount.textContent = loadedFiles.length ? loadedFiles.length + ' file' + (loadedFiles.length > 1 ? 's' : '') + ' loaded' : '';
+  fileCount.classList.toggle('on', loadedFiles.length > 0);
+  clearBtn.style.display = loadedFiles.length ? '' : 'none';
+}
+
+function loadFiles(fileList) {
+  const files = Array.from(fileList);
+  let done = 0, failed = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        loadedFiles.push({ name: file.name, text: decodeBytes(new Uint8Array(reader.result)) });
+      } catch (e) { failed++; }
+      if (++done === files.length) {
+        refreshFileUI();
+        setStatus(`${files.length} file(s) loaded${failed ? `, ${failed} failed` : ''}.`);
+      }
+    };
+    reader.onerror = () => { if (++done === files.length) { refreshFileUI(); setStatus('Some files could not be read.', true); } };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+fileInput.addEventListener('change', () => { if (fileInput.files.length) loadFiles(fileInput.files); fileInput.value = ''; });
+clearBtn.addEventListener('click', () => { loadedFiles = []; refreshFileUI(); setStatus('Loaded files cleared.'); });
+input.addEventListener('dragover', e => e.preventDefault());
+input.addEventListener('drop', e => {
+  e.preventDefault();
+  if (e.dataTransfer.files && e.dataTransfer.files.length) loadFiles(e.dataTransfer.files);
+});
+
+document.getElementById('load-sample').addEventListener('click', () => {
+  input.value = SAMPLE;
+  setStatus('Sample loaded — try "Run" in overlay or split mode.');
+});
+
+function collectSources() {
+  const srcs = loadedFiles.map(f => ({ name: f.name, text: f.text }));
+  if (input.value.trim()) srcs.push({ name: 'pasted text', text: input.value });
+  return srcs;
+}
+
+document.getElementById('run').addEventListener('click', () => {
+  const mode = document.querySelector('input[name=mode]:checked').value;
+  const srcs = collectSources();
+  if (!srcs.length) { setStatus('Paste a subtitle file or open file(s) first.', true); return; }
+  try {
+    if (mode === 'split') {
+      if (srcs.length > 1) throw new Error('Split works on one file at a time — clear extra files first.');
+      const cues = parseSubtitles(srcs[0].text);
+      if (!cues.length) throw new Error('No subtitle cues were found in this file.');
+      const size = Math.max(2, parseInt(document.getElementById('part-size').value, 10) || 500);
+      parts = [];
+      for (let i = 0; i < cues.length; i += size) parts.push(cues.slice(i, i + size));
+      partSelect.style.display = '';
+      partTag.style.display = '';
+      partTag.textContent = parts.length + ' parts';
+      partSelect.innerHTML = parts.map((p, i) => `<option value="${i}">Part ${i + 1} (${p.length} cues)</option>`).join('');
+      document.getElementById('output').value = toSRT(parts[0]);
+      setStatus(`Split ${cues.length} cues into ${parts.length} parts of up to ${size}.`);
+      return;
+    }
+    // merge modes
+    partSelect.style.display = 'none';
+    partTag.style.display = 'none';
+    const gapMs = Math.max(0, (parseFloat(document.getElementById('gap').value) || 0) * 1000);
+    const all = [];
+    let cursorEnd = 0;
+    for (const src of srcs) {
+      const cues = parseSubtitles(src.text);
+      if (!cues.length) throw new Error(`No cues found in "${src.name}".`);
+      if (mode === 'sequence') {
+        const offset = cursorEnd === 0 ? 0 : cursorEnd + gapMs;
+        const first = Math.min(...cues.map(c => c.start));
+        const shift = offset - first;
+        for (const c of cues) all.push({ start: Math.max(0, c.start + shift), end: c.end + shift, text: c.text });
+        cursorEnd = Math.max(...cues.map(c => c.end + shift));
+      } else {
+        for (const c of cues) all.push({ ...c });
+      }
+    }
+    all.sort((a, b) => a.start - b.start);
+    document.getElementById('output').value = toSRT(all);
+    setStatus(mode === 'sequence'
+      ? `Merged ${srcs.length} file(s) sequentially — ${all.length} cues total.`
+      : `Merged ${srcs.length} file(s) with original timings — ${all.length} cues total.`);
+  } catch (e) { setStatus(e.message, true); }
+});
+
+partSelect.addEventListener('change', () => {
+  const i = parseInt(partSelect.value, 10);
+  if (parts[i]) document.getElementById('output').value = toSRT(parts[i]);
+});
+
+document.getElementById('download').addEventListener('click', () => {
+  const mode = document.querySelector('input[name=mode]:checked').value;
+  const name = mode === 'split' ? `subtitles-part${(parseInt(partSelect.value, 10) || 0) + 1}.srt` : 'merged.srt';
+  downloadText(name, document.getElementById('output').value);
+});
+document.getElementById('copy').addEventListener('click', () => copyOutput('output'));
+</script>
+</body>
+</html>
