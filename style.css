@@ -124,4 +124,18 @@ main { flex: 1; padding: 44px 20px 60px; }
   .hero h1 { font-size: 1.7rem; }
   .nav { gap: 12px; }
   .nav a { font-size: .8rem; }
+/* ===== Pro additions ===== */
+.pro-banner{
+  background:linear-gradient(90deg,#FF832B,#E96F17);
+  color:#10151E;text-align:center;
+  padding:12px 20px;font-size:15px;
+}
+.pro-banner a{color:#10151E;font-weight:800;text-decoration:underline;margin-left:8px}
+.nav-pro{
+  background:#FF832B;color:#10151E !important;
+  padding:6px 14px;border-radius:8px;font-weight:700;
+}
+.nav-pro:hover{background:#E96F17;color:#10151E !important}
+.tool-card-pro{border:2px solid #FF832B}
+
 }
