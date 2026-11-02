@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checkout — SubKit Pro | Pay with Crypto</title>
+<meta name="description" content="Complete your SubKit Pro purchase with USDT, BTC or DOGE. Send $19 worth, submit your transaction ID, receive your license key by email.">
+<link rel="canonical" href="https://subkit.online/pay.html">
+<style>
+:root{
+  --bg:#0C1018; --panel:#171D28; --panel2:#202838; --input:#111722;
+  --orange:#FF832B; --orange-h:#E96F17; --text:#F4F6FA;
+  --muted:#9BA7B8; --border:#303A4A; --green:#27C98A; --red:#FF5C5C;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.6}
+a{color:var(--orange);text-decoration:none}
+.wrap{max-width:760px;margin:0 auto;padding:0 20px}
+
+nav{display:flex;align-items:center;justify-content:space-between;padding:16px 0}
+nav .logo{font-size:20px;font-weight:800}
+nav .logo span{color:var(--orange)}
+nav .links a{color:var(--muted);margin-left:22px;font-size:14px}
+
+h1{text-align:center;font-size:32px;margin:34px 0 6px}
+.sub{text-align:center;color:var(--muted);margin-bottom:34px}
+
+.tabs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:26px}
+.tab{background:var(--panel);border:1px solid var(--border);color:var(--muted);
+  padding:10px 20px;border-radius:10px;cursor:pointer;font-weight:700;font-size:14px;transition:.15s}
+.tab:hover{color:var(--text)}
+.tab.active{background:var(--orange);border-color:var(--orange);color:#10151E}
+
+.card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:30px;margin-bottom:22px}
+.steps{counter-reset:step}
+.step{display:flex;gap:16px;margin-bottom:22px}
+.step:last-child{margin-bottom:0}
+.num{flex:none;width:30px;height:30px;border-radius:50%;background:var(--orange);
+  color:#10151E;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:14px}
+.step h3{font-size:15px;margin-bottom:6px}
+.step p{color:var(--muted);font-size:13px}
+
+.netwarn{background:rgba(255,92,92,.08);border:1px solid rgba(255,92,92,.35);
+  color:#FFB3B3;border-radius:10px;padding:12px 16px;font-size:13px;margin-bottom:18px}
+.netwarn strong{color:var(--red)}
+.netwarn.ok{background:rgba(39,201,138,.08);border-color:rgba(39,201,138,.35);color:#A9EDD3}
+.netwarn.ok strong{color:var(--green)}
+
+.addr-box{display:flex;gap:10px;align-items:stretch;margin-bottom:18px;flex-wrap:wrap}
+.addr{flex:1;min-width:220px;background:var(--input);border:1px solid var(--border);
+  border-radius:10px;padding:14px 16px;font-family:monospace;font-size:13px;
+  word-break:break-all;color:var(--text)}
+.copy{flex:none;background:var(--panel2);border:1px solid var(--border);color:var(--orange);
+  font-weight:700;padding:0 22px;border-radius:10px;cursor:pointer;font-size:14px}
+.copy:hover{border-color:var(--orange)}
+
+.qr-wrap{display:flex;justify-content:center;margin-bottom:6px}
+.qr-note{text-align:center;color:var(--muted);font-size:12px;margin-bottom:8px}
+
+form label{display:block;font-size:13px;font-weight:700;margin:14px 0 6px}
+form input,form select,form textarea{width:100%;background:var(--input);border:1px solid var(--border);
+  border-radius:10px;padding:12px 14px;color:var(--text);font-size:14px;font-family:inherit}
+form input:focus{outline:none;border-color:var(--orange)}
+.btn{display:inline-block;width:100%;text-align:center;margin-top:20px;padding:14px;
+  background:var(--orange);color:#10151E;border:none;border-radius:10px;
+  font-size:16px;font-weight:800;cursor:pointer}
+.btn:hover{background:var(--orange-h)}
+
+.info{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:12px}
+.info p{color:var(--muted);font-size:13px}
+.info b{color:var(--text)}
+
+.back{text-align:center;margin:30px 0 50px}
+footer{border-top:1px solid var(--border);padding:22px 0;text-align:center;color:#687589;font-size:13px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<nav>
+  <div class="logo">Sub<span>Kit</span></div>
+  <div class="links"><a href="/">Tools</a><a href="pro.html">Pro</a></div>
+</nav>
+
+<h1>Checkout — AutoCaption Pro</h1>
+<p class="sub">Lifetime license · $19 · pay with crypto</p>
+
+<div class="tabs">
+  <div class="tab active" data-coin="usdt-trc20">USDT · TRC-20</div>
+  <div class="tab" data-coin="usdt-bep20">USDT · BEP-20</div>
+  <div class="tab" data-coin="btc">BTC</div>
+  <div class="tab" data-coin="doge">DOGE</div>
+</div>
+
+<!-- ============ USDT TRC-20 (RECOMMENDED) ============ -->
+<div class="coin-panel" id="panel-usdt-trc20">
+  <div class="card">
+    <div class="netwarn ok">✅ Recommended — lowest fees. Send <strong>USDT on the TRON network (TRC-20) only</strong>. Any other network = permanent loss of funds.</div>
+    <div class="steps">
+      <div class="step"><div class="num">1</div><div>
+        <h3>Send exactly $19 worth of USDT</h3>
+        <p>Check the current USDT rate before sending. A small buffer (a few cents) is recommended to cover fees.</p>
+        <div class="addr-box">
+          <div class="addr" id="addr-usdt-trc20">TWimCKFRtZNMEtdHjEdTEdenTmirBpGKEL</div>
+          <button class="copy" onclick="copyAddr('addr-usdt-trc20',this)">Copy</button>
+        </div>
+        <div class="qr-wrap"><div id="qr-usdt-trc20"></div></div>
+        <p class="qr-note">Scan with your wallet app (TRC-20 network)</p>
+      </div></div>
+      <div class="step"><div class="num">2</div><div>
+        <h3>Submit your transaction ID (TXID)</h3>
+        <p>Fill the form below — your license key is emailed to you, usually within a few hours.</p>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ USDT BEP-20 ============ -->
+<div class="coin-panel hidden" id="panel-usdt-bep20">
+  <div class="card">
+    <div class="netwarn">⚠️ Send <strong>USDT on the BNB Smart Chain (BEP-20) only</strong>. Any other network = permanent loss of funds.</div>
+    <div class="steps">
+      <div class="step"><div class="num">1</div><div>
+        <h3>Send exactly $19 worth of USDT</h3>
+        <p>Check the current USDT rate before sending. A small buffer (a few cents) is recommended to cover fees.</p>
+        <div class="addr-box">
+          <div class="addr" id="addr-usdt-bep20">0xA394bBeAaC912304c5a123221aB43C502fE089e7</div>
+          <button class="copy" onclick="copyAddr('addr-usdt-bep20',this)">Copy</button>
+        </div>
+        <div class="qr-wrap"><div id="qr-usdt-bep20"></div></div>
+        <p class="qr-note">Scan with your wallet app (BEP-20 network)</p>
+      </div></div>
+      <div class="step"><div class="num">2</div><div>
+        <h3>Submit your transaction ID (TXID)</h3>
+        <p>Fill the form below — your license key is emailed to you, usually within a few hours.</p>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ BTC (native Bitcoin network) ============ -->
+<div class="coin-panel hidden" id="panel-btc">
+  <div class="card">
+    <div class="netwarn ok">✅ Send <strong>native BTC on the Bitcoin network only</strong>. Do not send BEP-20, ERC-20 or any other token to this address.</div>
+    <div class="steps">
+      <div class="step"><div class="num">1</div><div>
+        <h3>Send exactly $19 worth of BTC</h3>
+        <p>Check the current BTC rate before sending — because BTC price moves, send slightly more rather than slightly less. Bitcoin network fees vary; your wallet will show the fee before you confirm.</p>
+        <div class="addr-box">
+          <div class="addr" id="addr-btc">bc1q8k503cd55hgh9mz2y0s94vqq343xw2yq44kexn</div>
+          <button class="copy" onclick="copyAddr('addr-btc',this)">Copy</button>
+        </div>
+        <div class="qr-wrap"><div id="qr-btc"></div></div>
+        <p class="qr-note">Scan with your wallet app (Bitcoin network)</p>
+      </div></div>
+      <div class="step"><div class="num">2</div><div>
+        <h3>Submit your transaction ID (TXID)</h3>
+        <p>Fill the form below — your license key is emailed to you, usually within a few hours.</p>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ DOGE (native Dogecoin network) ============ -->
+<div class="coin-panel hidden" id="panel-doge">
+  <div class="card">
+    <div class="netwarn ok">✅ Send <strong>native DOGE on the Dogecoin network only</strong>. Do not send any other token to this address.</div>
+    <div class="steps">
+      <div class="step"><div class="num">1</div><div>
+        <h3>Send exactly $19 worth of DOGE</h3>
+        <p>Check the current DOGE rate before sending — because DOGE price moves, send slightly more rather than slightly less. Low network fees, fast confirmations.</p>
+        <div class="addr-box">
+          <div class="addr" id="addr-doge">DSyYFB23JQRo4w7XpYCUsCCLiwePyVAhj3</div>
+          <button class="copy" onclick="copyAddr('addr-doge',this)">Copy</button>
+        </div>
+        <div class="qr-wrap"><div id="qr-doge"></div></div>
+        <p class="qr-note">Scan with your wallet app (Dogecoin network)</p>
+      </div></div>
+      <div class="step"><div class="num">2</div><div>
+        <h3>Submit your transaction ID (TXID)</h3>
+        <p>Fill the form below — your license key is emailed to you, usually within a few hours.</p>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TXID FORM (shared) ============ -->
+<div class="card">
+  <div class="steps">
+    <div class="step"><div class="num">2</div><div style="flex:1">
+      <h3>Payment confirmation form</h3>
+      <p>All fields are required.</p>
+      <!-- ⚠️ IMPORTANT: replace YOUR_EMAIL_HERE with your real email,
+           then submit this form once yourself to activate FormSubmit. -->
+      <form action="https://formsubmit.co/shahyad543@gmail.com" method="POST">
+        <input type="hidden" name="_subject" value="New SubKit Pro order — crypto payment">
+        <input type="hidden" name="_captcha" value="false">
+        <input type="hidden" name="_template" value="table">
+        <label>Your email (license key will be sent here)</label>
+        <input type="email" name="Email" required placeholder="you@example.com">
+        <label>Coin / network you paid with</label>
+        <select name="Network" id="coin-select" required>
+          <option value="USDT TRC-20">USDT — TRC-20</option>
+          <option value="USDT BEP-20">USDT — BEP-20</option>
+          <option value="BTC (Bitcoin network)">BTC — Bitcoin network</option>
+          <option value="DOGE (Dogecoin network)">DOGE — Dogecoin network</option>
+        </select>
+        <label>Transaction ID (TXID / hash)</label>
+        <input type="text" name="TXID" required placeholder="e.g. 9f2c1a8b...">
+        <label>Amount sent (optional but helpful)</label>
+        <input type="text" name="Amount" placeholder="e.g. 19.02 USDT">
+        <button type="submit" class="btn">Submit payment → Get license key</button>
+      </form>
+    </div></div>
+  </div>
+</div>
+
+<div class="info">
+  <p><b>What happens next?</b> We verify your transaction on the blockchain and email your personal license key plus the download link, usually within a few hours. The key activates AutoCaption Pro on your machine — offline, forever.</p>
+</div>
+<div class="info">
+  <p><b>Security note:</b> the addresses above are the only official SubKit payment addresses. Addresses shown inside the app or emailed by anyone else are not ours.</p>
+</div>
+
+<p class="back"><a href="pro.html">← Back to Pro page</a></p>
+
+</div>
+
+<footer>© SubKit — subkit.online</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+// --- tabs ---
+const tabs=document.querySelectorAll('.tab');
+tabs.forEach(t=>t.addEventListener('click',()=>{
+  tabs.forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  document.querySelectorAll('.coin-panel').forEach(p=>p.classList.add('hidden'));
+  document.getElementById('panel-'+t.dataset.coin).classList.remove('hidden');
+  document.getElementById('coin-select').value={
+    'usdt-trc20':'USDT TRC-20',
+    'usdt-bep20':'USDT BEP-20',
+    'btc':'BTC (Bitcoin network)',
+    'doge':'DOGE (Dogecoin network)'
+  }[t.dataset.coin];
+}));
+
+// --- copy button ---
+function copyAddr(id,btn){
+  const txt=document.getElementById(id).textContent.trim();
+  navigator.clipboard.writeText(txt).then(()=>{
+    const old=btn.textContent;btn.textContent='Copied ✓';
+    setTimeout(()=>btn.textContent=old,1600);
+  });
+}
+
+// --- QR codes ---
+function makeQR(elId,text){
+  const el=document.getElementById(elId);
+  if(el && window.QRCode) new QRCode(el,{text:text,width:150,height:150,correctLevel:QRCode.CorrectLevel.M});
+}
+makeQR('qr-usdt-trc20','TWimCKFRtZNMEtdHjEdTEdenTmirBpGKEL');
+makeQR('qr-usdt-bep20','0xA394bBeAaC912304c5a123221aB43C502fE089e7');
+makeQR('qr-btc','bitcoin:bc1q8k503cd55hgh9mz2y0s94vqq343xw2yq44kexn');
+makeQR('qr-doge','dogecoin:DSyYFB23JQRo4w7XpYCUsCCLiwePyVAhj3');
+</script>
+</body>
+</html>
