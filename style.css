@@ -135,3 +135,4 @@ main { flex: 1; padding: 44px 20px 60px; }
   .nav { gap: 12px; }
   .nav a { font-size: .8rem; }
 }
+.brand-logo { width: 26px; height: 26px; border-radius: 6px; }
