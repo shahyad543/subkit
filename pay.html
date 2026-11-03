@@ -195,10 +195,11 @@ footer{border-top:1px solid var(--border);padding:22px 0;text-align:center;color
       <p>All fields are required.</p>
       <!-- ⚠️ IMPORTANT: replace YOUR_EMAIL_HERE with your real email,
            then submit this form once yourself to activate FormSubmit. -->
-      <form action="https://formsubmit.co/shahyad543@gmail.com" method="POST">
-        <input type="hidden" name="_subject" value="New SubKit Pro order — crypto payment">
-        <input type="hidden" name="_captcha" value="false">
-        <input type="hidden" name="_template" value="table">
+      <form id="pay-form">
+        <input type="hidden" name="access_key" value="18d78d77-ab6e-4040-82f7-488d0da7f32f">
+        <input type="hidden" name="subject" value="New SubKit Pro order — crypto payment">
+        <input type="hidden" name="from_name" value="SubKit Store">
+        <input type="checkbox" name="botcheck" style="display:none">
         <label>Your email (license key will be sent here)</label>
         <input type="email" name="Email" required placeholder="you@example.com">
         <label>Coin / network you paid with</label>
@@ -213,6 +214,7 @@ footer{border-top:1px solid var(--border);padding:22px 0;text-align:center;color
         <label>Amount sent (optional but helpful)</label>
         <input type="text" name="Amount" placeholder="e.g. 19.02 USDT">
         <button type="submit" class="btn">Submit payment → Get license key</button>
+        <p id="form-status" style="text-align:center;margin-top:12px;font-size:14px"></p>
       </form>
     </div></div>
   </div>
@@ -267,5 +269,33 @@ makeQR('qr-usdt-bep20','0xA394bBeAaC912304c5a123221aB43C502fE089e7');
 makeQR('qr-btc','bitcoin:bc1q8k503cd55hgh9mz2y0s94vqq343xw2yq44kexn');
 makeQR('qr-doge','dogecoin:DSyYFB23JQRo4w7XpYCUsCCLiwePyVAhj3');
 </script>
+  // --- payment form (Web3Forms) ---
+document.getElementById('pay-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const status = document.getElementById('form-status');
+  const btn = e.target.querySelector('button[type="submit"]');
+  status.style.color = '#9BA7B8';
+  status.textContent = 'Sending...';
+  btn.disabled = true;
+  try {
+    const res = await fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(Object.fromEntries(new FormData(e.target)))
+    });
+    const data = await res.json();
+    if (data.success) {
+      e.target.reset();
+      status.style.color = '#27C98A';
+      status.textContent = '✅ Received! Your license key will be emailed within a few hours.';
+    } else {
+      throw new Error('failed');
+    }
+  } catch {
+    status.style.color = '#FF5C5C';
+    status.textContent = 'Something went wrong. Please try again or contact support.';
+  }
+  btn.disabled = false;
+});
 </body>
 </html>
